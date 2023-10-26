@@ -18,9 +18,19 @@ export type BillingInfo = {
   };
 };
 
+export type BillingHistoricalUsage = {
+  date: string;
+  events: number;
+};
+
 export function useBilling(): UseQueryResult<BillingInfo> {
-  return useQuery(["billing"], () => api.get<BillingInfo>(`/_billing`), {
-    refetchOnMount: true,
+  return useQuery({ queryKey: ["billing"], queryFn: () => api.get<BillingInfo>(`/_billing`), refetchOnMount: true });
+}
+
+export function useHistoricalData(): UseQueryResult<BillingHistoricalUsage[]> {
+  return useQuery({
+    queryKey: ["billing-historical"],
+    queryFn: () => api.get<BillingHistoricalUsage[]>(`/_billing/historical`),
   });
 }
 

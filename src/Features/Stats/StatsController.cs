@@ -1,4 +1,5 @@
 using Aptabase.Features.Authentication;
+using Aptabase.Features.GeoIP;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Aptabase.Features.Stats;
@@ -11,7 +12,7 @@ public record PeriodicStats
 
 public record PeriodicStatsRow
 {
-    public string Period { get; set; } = "";
+    public DateTime Period { get; set; }
     public double Users { get; set; } = 0;
     public int Sessions { get; set; } = 0;
     public int Events { get; set; } = 0;
@@ -70,6 +71,45 @@ public record EventPropsItem
     public decimal Sum { get; set; }
 }
 
+public record LiveGeoDataPoint
+{
+    public string CountryCode { get; set; } = "";
+    public string RegionName { get; set; } = "";
+    public ulong Users { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+}
+
+public record LiveRecentSession
+{
+    public string Id { get; set; } = "";
+    public DateTime StartedAt { get; set; }
+    public ulong Duration { get; set; }
+    public ulong EventsCount { get; set; }
+    public string AppVersion { get; set; } = "";
+    public string CountryCode { get; set; } = "";
+    public string RegionName { get; set; } = "";
+    public string OsName { get; set; } = "";
+    public string OsVersion { get; set; } = "";
+}
+
+public record SessionTimeline
+{
+    public string Id { get; set; } = "";
+    public DateTime StartedAt { get; set; }
+    public ulong Duration { get; set; }
+    public ulong EventsCount { get; set; }
+    public string AppVersion { get; set; } = "";
+    public string CountryCode { get; set; } = "";
+    public string RegionName { get; set; } = "";
+    public string OsName { get; set; } = "";
+    public string OsVersion { get; set; } = "";
+    public string[] EventsName { get; set; } = Array.Empty<string>();
+    public DateTime[] EventsTimestamp { get; set; } = Array.Empty<DateTime>();
+    public string[] EventsStringProps { get; set; } = Array.Empty<string>();
+    public string[] EventsNumericProps { get; set; } = Array.Empty<string>();
+}
+
 public enum TopNValue
 {
     UniqueSessions,
@@ -86,6 +126,7 @@ public enum Granularity
 public record QueryArgs
 {
     public string AppId { get; set; } = "";
+    public string? SessionId { get; set; } = "";
     public DateTime? DateFrom { get; set; }
     public DateTime? DateTo { get; set; }
     public Granularity Granularity { get; set; }
@@ -99,6 +140,7 @@ public class QueryParams
 {
     public string BuildMode { get; set; } = "";
     public string AppId { get; set; } = "";
+    public string? SessionId { get; set; } = "";
     public string? Period { get; set; }
     public string? CountryCode { get; set; }
     public string? OsName { get; set; }
@@ -140,6 +182,7 @@ public class QueryParams
         return new QueryArgs
         {
             AppId = appId,
+            SessionId = SessionId,
             DateFrom = dateFrom,
             DateTo = dateTo,
             Granularity = granularity,
@@ -156,9 +199,11 @@ public class QueryParams
 public class StatsController : Controller
 {
     private readonly IQueryClient _queryClient;
+    private readonly GeoIPClient _geodb;
 
-    public StatsController(IQueryClient queryClient)
+    public StatsController(IQueryClient queryClient, GeoIPClient geodb)
     {
+        _geodb = geodb ?? throw new ArgumentNullException(nameof(geodb));
         _queryClient = queryClient ?? throw new ArgumentNullException(nameof(queryClient));
     }
 
@@ -256,6 +301,50 @@ public class StatsController : Controller
         }, cancellationToken);
 
         return Ok(rows);
+    }
+
+    [HttpGet("/api/_stats/live-geo")]
+    public async Task<IActionResult> LiveGeo([FromQuery] QueryParams body, CancellationToken cancellationToken)
+    {
+        var query = body.Parse(DateTime.UtcNow);
+
+        var rows = await _queryClient.NamedQueryAsync<LiveGeoDataPoint>("live_geo__v1", new {
+            app_id = query.AppId,
+        }, cancellationToken);
+
+        foreach (var row in rows)
+        {
+            var (lat, lng) = _geodb.GetLatLng(row.CountryCode, row.RegionName);
+            row.Latitude = lat;
+            row.Longitude = lng;
+        }
+
+        return Ok(rows);
+    }
+
+    [HttpGet("/api/_stats/live-sessions")]
+    public async Task<IActionResult> LiveSessions([FromQuery] QueryParams body, CancellationToken cancellationToken)
+    {
+        var query = body.Parse(DateTime.UtcNow);
+
+        var rows = await _queryClient.NamedQueryAsync<LiveRecentSession>("live_sessions__v1", new {
+            app_id = query.AppId,
+        }, cancellationToken);
+
+        return Ok(rows);
+    }
+
+    [HttpGet("/api/_stats/live-session-details")]
+    public async Task<IActionResult> LiveSessionDetails([FromQuery] QueryParams body, CancellationToken cancellationToken)
+    {
+        var query = body.Parse(DateTime.UtcNow);
+
+        var row = await _queryClient.NamedQuerySingleAsync<SessionTimeline>("live_session_details__v1", new {
+            app_id = query.AppId,
+            session_id = query.SessionId,
+        }, cancellationToken);
+
+        return Ok(row);
     }
 
     private async Task<KeyMetricsRow> GetKeyMetrics(QueryArgs args, CancellationToken cancellationToken)

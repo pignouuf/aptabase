@@ -5,6 +5,7 @@ import { topEventProps } from "../query";
 import { useApps } from "@features/apps";
 import { TopNChart } from "./TopNChart";
 import { TopNTitle } from "./TopNTitle";
+import { useDatePicker } from "@hooks/use-datepicker";
 
 type Props = {
   appId: string;
@@ -15,24 +16,25 @@ type AggregateValueName = "events" | "sum" | "median" | "min" | "max";
 export function TopEventProps(props: Props) {
   const { buildMode } = useApps();
   const [searchParams] = useSearchParams();
-  const period = searchParams.get("period") || "";
+  const [period] = useDatePicker();
   const countryCode = searchParams.get("countryCode") || "";
   const appVersion = searchParams.get("appVersion") || "";
   const eventName = searchParams.get("eventName") || "";
   const osName = searchParams.get("osName") || "";
 
   const [stringKeyIndex, setStringKeyIndex] = useState(0);
-  const [selectedNumericKey, setSelectedNumericKey] = useState<
-    [AggregateValueName, string | undefined]
-  >(["events", undefined]);
+  const [selectedNumericKey, setSelectedNumericKey] = useState<[AggregateValueName, string | undefined]>([
+    "events",
+    undefined,
+  ]);
 
   const {
     isLoading,
     isError,
     data: rows,
-  } = useQuery(
-    ["top-event-props", buildMode, props.appId, period, countryCode, appVersion, eventName, osName],
-    () =>
+  } = useQuery({
+    queryKey: ["top-event-props", buildMode, props.appId, period, countryCode, appVersion, eventName, osName],
+    queryFn: () =>
       topEventProps({
         buildMode,
         appId: props.appId,
@@ -42,8 +44,8 @@ export function TopEventProps(props: Props) {
         eventName,
         osName,
       }),
-    { staleTime: 10000 }
-  );
+    staleTime: 10000,
+  });
 
   const stringKeys = [...new Set((rows || []).map((row) => row.stringKey).filter((x) => !!x))];
 
@@ -51,9 +53,9 @@ export function TopEventProps(props: Props) {
 
   if (!isLoading && stringKeys.length === 0) {
     const value =
-      (rows || []).find(
-        (x) => selectedNumericKey[0] === "events" || x.numericKey === selectedNumericKey[1]
-      )?.[selectedNumericKey[0]] ?? 0;
+      (rows || []).find((x) => selectedNumericKey[0] === "events" || x.numericKey === selectedNumericKey[1])?.[
+        selectedNumericKey[0]
+      ] ?? 0;
 
     return (
       <>
@@ -93,9 +95,12 @@ export function TopEventProps(props: Props) {
 
   return (
     <TopNChart
+      id="props"
+      key="props"
       title={<TopNTitle backProperty="eventName">{eventName}</TopNTitle>}
       keyLabel={<StringKeySelector stringKeys={stringKeys} onChangeIndex={setStringKeyIndex} />}
       valueLabel={<NumericKeySelector numericKeys={numericKeys} onChange={setSelectedNumericKey} />}
+      defaultFormat="absolute"
       isLoading={isLoading}
       isError={isError}
       items={items}

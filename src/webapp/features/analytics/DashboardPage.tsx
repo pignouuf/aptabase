@@ -2,7 +2,7 @@ import { Page, PageHeading } from "@components/Page";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useApps, useCurrentApp } from "@features/apps";
 import { DebugModeBanner } from "./mode/DebugModeBanner";
-import { AppConfigMenu } from "./mode/AppConfigMenu";
+import { BuildModeSelector } from "./mode/BuildModeSelector";
 import { CurrentFilters } from "./CurrentFilters";
 import { MainChartWidget } from "./key_metrics/MainChartWidget";
 import { OSWidget } from "./dashboard/OSWidget";
@@ -42,15 +42,15 @@ export function Component() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <PageHeading title="Dashboard" onClick={resetFilters} />
-          <div className="flex items-center">
-            <AppConfigMenu />
+          <div className="flex items-center space-x-2">
+            <BuildModeSelector />
             <DateRangePicker />
           </div>
         </div>
         <div className="flex w-full justify-end">
           <CurrentFilters />
         </div>
-        <MainChartWidget appId={app.id} />
+        <MainChartWidget appId={app.id} appName={app.name} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px] pt-[1px] bg-accent">
           <LazyLoad className={containerClassName}>
             <CountryWidget appId={app.id} />

@@ -16,16 +16,6 @@ public class ClickHouseQueryClient : IQueryClient
         _conn = conn ?? throw new ArgumentNullException(nameof(conn));
     }
 
-    public async Task<IEnumerable<T>> QueryAsync<T>(string query, CancellationToken cancellationToken)
-    {
-        return await _conn.QueryAsync<T>(query, cancellationToken);
-    }
-
-    public async Task<T> QuerySingleAsync<T>(string query, CancellationToken cancellationToken) where T : new()
-    {
-        return await _conn.QueryFirstOrDefaultAsync<T>(query, cancellationToken);
-    }
-
     public async Task<IEnumerable<T>> NamedQueryAsync<T>(string name, object args, CancellationToken cancellationToken)
     {
         var dict = args.GetType().GetProperties().ToDictionary(p => p.Name, p => FormatArg(p.GetValue(args, null)));
@@ -38,6 +28,14 @@ public class ClickHouseQueryClient : IQueryClient
     {
         var rows = await NamedQueryAsync<T>(name, args, cancellationToken);
         return rows.FirstOrDefault() ?? new T();
+    }
+
+    public async Task<Stream> StreamResponseAsync(string query, CancellationToken cancellationToken)
+    {
+        using var command = _conn.CreateCommand();
+        command.CommandText = query;
+        var result = await command.ExecuteRawResultAsync(cancellationToken);
+        return await result.ReadAsStreamAsync();
     }
 
     private readonly ConcurrentDictionary<string, Template> _namedQueries = new();

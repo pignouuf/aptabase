@@ -4,19 +4,18 @@ import { useSearchParams } from "react-router-dom";
 import { keyMetrics } from "../query";
 import { useApps } from "@features/apps";
 import { KeyMetricsContainer } from "./MetricsContainer";
+import { useDatePicker } from "@hooks/use-datepicker";
 
 type Props = {
   appId: string;
-  activeMetric: "users" | "sessions";
-  onChangeActiveMetric: (metric: "users" | "sessions") => void;
-  showEvents: boolean;
-  onToggleShowEvents: () => void;
+  activeMetric: "users" | "sessions" | "events";
+  onChangeActiveMetric: (metric: "users" | "sessions" | "events") => void;
 };
 
 export function KeyMetrics(props: Props) {
   const { buildMode } = useApps();
   const [searchParams] = useSearchParams();
-  const period = searchParams.get("period") || "";
+  const [period] = useDatePicker();
   const countryCode = searchParams.get("countryCode") || "";
   const appVersion = searchParams.get("appVersion") || "";
   const eventName = searchParams.get("eventName") || "";
@@ -26,9 +25,9 @@ export function KeyMetrics(props: Props) {
     isLoading,
     isError,
     data: metrics,
-  } = useQuery(
-    ["key-metrics", buildMode, props.appId, period, countryCode, appVersion, eventName, osName],
-    () =>
+  } = useQuery({
+    queryKey: ["key-metrics", buildMode, props.appId, period, countryCode, appVersion, eventName, osName],
+    queryFn: () =>
       keyMetrics({
         buildMode,
         appId: props.appId,
@@ -38,8 +37,8 @@ export function KeyMetrics(props: Props) {
         eventName,
         osName,
       }),
-    { staleTime: 10000 }
-  );
+    staleTime: 10000,
+  });
 
   return (
     <KeyMetricsContainer>
@@ -65,11 +64,11 @@ export function KeyMetrics(props: Props) {
           />
           <Metric
             label="Events"
-            activeClassName="bg-foreground"
             current={metrics?.current.events ?? 0}
             previous={metrics?.previous?.events}
-            active={props.showEvents}
-            onClick={props.onToggleShowEvents}
+            activeClassName="bg-primary"
+            active={props.activeMetric === "events"}
+            onClick={() => props.onChangeActiveMetric("events")}
             format="number"
           />
           <Metric

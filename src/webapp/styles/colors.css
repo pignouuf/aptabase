@@ -1,7 +1,6 @@
 :root {
   color-scheme: light;
 
-  --primary: 221 100% 55%;
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
   --muted: 210 20% 98%;
@@ -22,7 +21,7 @@
   --success-foreground: 0 0% 98%;
   --warning: 25 95% 53%;
   --warning-foreground: 0 0% 98%;
-  --chart-highlight: rgb(0, 0, 0, 0.05);
+  --chart-highlight: rgb(0, 0, 0, 0.075);
   --ring: 213 94% 68%;
   --radius: 0.5rem;
 }
@@ -31,14 +30,13 @@
   :root {
     color-scheme: dark;
 
-    --primary: 221 100% 55%;
-    --background: 240 10% 3.9%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
     --muted: 0 0% 8%;
     --muted-foreground: 240 5% 64.9%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
@@ -52,7 +50,7 @@
     --success-foreground: 0 0% 98%;
     --warning: 25 95% 53%;
     --warning-foreground: 0 0% 98%;
-    --chart-highlight: rgb(255, 255, 255, 0.1);
+    --chart-highlight: rgb(255, 255, 255, 0.075);
     --ring: 213 94% 68%;
     --radius: 0.5rem;
   }

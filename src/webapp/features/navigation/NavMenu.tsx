@@ -1,8 +1,15 @@
-import { IconCode, IconGraph, IconLayoutGrid, IconSettings } from "@tabler/icons-react";
+import {
+  IconCode,
+  IconGraph,
+  IconLayoutGrid,
+  IconSettings,
+  IconActivityHeartbeat,
+  IconCloudDownload,
+} from "@tabler/icons-react";
 import { NavCategory } from "./NavCategory";
 import { NavItem } from "./NavItem";
-import { isSupportEnabled } from "../env";
-import { SupportNavCategory } from "../support";
+import { isSupportEnabled } from "@features/env";
+import { SupportNavCategory } from "@features/support";
 import { useCurrentApp } from "@features/apps";
 
 export function NavMenu(props: { onNavigation?: VoidFunction }) {
@@ -20,6 +27,20 @@ export function NavMenu(props: { onNavigation?: VoidFunction }) {
             disabled={!currentApp}
             href={`/${currentApp?.id}/`}
             icon={IconGraph}
+            onNavigation={props.onNavigation}
+          />
+          <NavItem
+            label="Live View"
+            disabled={!currentApp}
+            href={`/${currentApp?.id}/live`}
+            icon={IconActivityHeartbeat}
+            onNavigation={props.onNavigation}
+          />
+          <NavItem
+            label="Export"
+            disabled={!currentApp}
+            href={`/${currentApp?.id}/export`}
+            icon={IconCloudDownload}
             onNavigation={props.onNavigation}
           />
           <NavItem
